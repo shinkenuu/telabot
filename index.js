@@ -3,46 +3,74 @@ const app = express()
 const bodyParser = require('body-parser')
 const axios = require('axios')
 
-// const client = require('./client')
-
-// const CHATS = require('./chats.json')
+const CHATS = require('./chats.json')
 const PORT = process.env.PORT || 3000
 const TELEGRAM_BOT_KEY = process.env.TELEGRAM_BOT_KEY
 const TELEGRAM_SEND_MESSAGE_URI = `http://api.telegram.org/bot${TELEGRAM_BOT_KEY}/sendMessage`
 
 console.log(TELEGRAM_SEND_MESSAGE_URI)
 
-app.use(bodyParser.json()) // for parsing application/json
+const sendMessage = function (chat_id, text) {
+  uriParams = `?chat_id=${chat_id}&text=${text}`
+
+  return axios.get(
+    TELEGRAM_SEND_MESSAGE_URI + uriParams
+  )
+  .then(response => {
+    console.log(`Message '${message.text}' sent to chat_id ${message.chat_id}`)
+  })
+  .catch(err => {
+    console.error(err)
+  })
+}
+
+const findIntention = function (message) {
+  console.log(`Message in findIntention: ${message}`)
+  let intention = null;
+
+  if(message.entities && message.entities.length > 0
+    && message.entities[0].type === 'bot_command') {
+      console.log('Command spotted!')
+      intention = message.text.replace('/', '')
+    }
+
+  return intention;
+}
+
+const replyMessage = function (message) {
+  if(message == undefined) {
+    console.log('Message is undefined')
+    return
+  }
+
+  console.log(`Message in replyMessage: ${message}`)
+  const intention = findIntention(message)
+
+  chat_id = message.chat.id
+  text = CHATS[intention] || '*hums*'
+
+  console.log(`Intention: ${intention}`)
+  sendMessage(chat_id, text)
+}
+
+app.use(bodyParser.json())
 app.use(
   bodyParser.urlencoded({
     extended: true
   })
-) // for parsing application/x-www-form-urlencoded
+)
 
 app.post('/new-message', function(req, res) {
-  let { message } = req.body
+  const { message } = req.body
 
-  console.log(message)
+  console.log(`Message in app.post: ${message}`)
 
-  message = {
-    chat_id: message.chat.id,
-    text: 'The Wheel weaves as The Wheel wills.'
-  }
+  replyMessage(message)
 
   res.end('ok')
 
-  axios.get(
-    `${TELEGRAM_SEND_MESSAGE_URI}?chat_id=${message.chat_id}&text=${message.text}`)
-    .then(response => {
-      console.log(`Message ${message.text} sent to chat_id ${message.chat_id}`)
-    })
-    .catch(err => {
-      console.error(err)
-    })
-
 })
 
-// Finally, start our server
 app.listen(PORT, function() {
   console.log(`Lewis Therin listening on port ${PORT}!`)
 })
