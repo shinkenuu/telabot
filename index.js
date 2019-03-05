@@ -20,6 +20,7 @@ app.use(
 
 app.post('/new-message', function(req, res) {
   const { message } = req.body
+  
   console.log(message)
 
   const message = {
