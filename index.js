@@ -3,10 +3,14 @@ const app = express()
 const bodyParser = require('body-parser')
 const axios = require('axios')
 
-const CHATS = require('./chats.json')
+// const client = require('./client')
+
+// const CHATS = require('./chats.json')
 const PORT = process.env.PORT || 3000
-const TELEGRAM_HOST = 'http://api.telegram.org'
 const TELEGRAM_BOT_KEY = process.env.TELEGRAM_BOT_KEY
+const TELEGRAM_SEND_MESSAGE_URI = `http://api.telegram.org/bot${TELEGRAM_BOT_KEY}/sendMessage`
+
+console.log(TELEGRAM_SEND_MESSAGE_URI)
 
 app.use(bodyParser.json()) // for parsing application/json
 app.use(
@@ -16,31 +20,29 @@ app.use(
 ) // for parsing application/x-www-form-urlencoded
 
 app.post('/new-message', function(req, res) {
+  let { message } = req.body
 
-  console.log(req.body)
-  const { message } = req.body
+  console.log(message)
 
-  axios
-    .post(
-      `${TELEGRAM_HOST}/bot${TELEGRAM_BOT_KEY}/sendMessage`,
-      {
-        chat_id: message.chat.id,
-        text: 'The Wheel weaves as The Wheel wills.'
-      }
-    )
+  message = {
+    chat_id: message.chat.id,
+    text: 'The Wheel weaves as The Wheel wills.'
+  }
+
+  res.end('ok')
+
+  axios.get(
+    `${TELEGRAM_SEND_MESSAGE_URI}?chat_id=${message.chat_id}&text=${message.text}`)
     .then(response => {
-      // We get here if the message was successfully posted
-      console.log('Message posted')
-      res.end('ok')
+      console.log(`Message ${message.text} sent to chat_id ${message.chat_id}`)
     })
     .catch(err => {
-      // ...and here if it was not
-      console.log('Error :', err)
-      res.end('Error :' + err)
+      console.error(err)
     })
+
 })
 
 // Finally, start our server
 app.listen(PORT, function() {
-  console.log(`Telegram app listening on port ${PORT}!`)
+  console.log(`Lewis Therin listening on port ${PORT}!`)
 })
